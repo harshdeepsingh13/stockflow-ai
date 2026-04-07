@@ -26,7 +26,7 @@
 
 ## Project Overview
 
-**social-media-manager-ai-agent** is a Node.js-based automation pipeline that orchestrates the entire stock photo submission workflow:
+**StockFlow AI** is a Node.js-based automation pipeline that orchestrates the entire stock photo submission workflow:
 
 1. **Discovers** pending images in a source directory
 2. **Generates** compelling titles, descriptions, and tags using LLM (Ollama)
@@ -63,7 +63,7 @@ Perfect for photographers and content creators who want to bulk-upload to stock 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│              social-media-manager-ai-agent Pipeline             │
+│              StockFlow AI Pipeline             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  1. GET PENDING IMAGES                                          │
@@ -161,7 +161,7 @@ The `PlatformFactory` handles instantiation based on `SERVICE_PLATFORMS` env var
 
 ```bash
 # Clone or download the repository
-cd social-media-manager-ai-agent
+cd StockFlow AI
 
 # Install dependencies
 npm install
