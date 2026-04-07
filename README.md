@@ -1,4 +1,4 @@
-# social-media-manager-ai-agent 📸🤖
+# StockFlow AI 📸🤖
 
 > **Automated AI-powered stock photo submission pipeline** — Generate compelling metadata, enrich with trending tags, and upload stock photos to Shutterstock with minimal manual intervention.
 
