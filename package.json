@@ -1,0 +1,22 @@
+{
+  "name": "social-media-manager-ai-agent",
+  "version": "1.0.0",
+  "description": "AI agent to automate social media metadata and stock photo uploads",
+  "license": "ISC",
+  "author": "Harshdeep Singh",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "pipeline": "node index.js",
+    "pipeline:dry-run": "PIPELINE_DRY_RUN=true node index.js",
+    "trends": "node index.js --trends-only",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.36",
+    "@langchain/ollama": "^0.1.4",
+    "dotenv": "^17.4.0",
+    "playwright": "^1.59.1"
+  }
+}
