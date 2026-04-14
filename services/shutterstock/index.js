@@ -985,12 +985,12 @@ class ShutterStockService extends PlatformService {
         console.warn("Load more button was not found on trends page. Continuing with visible tags.");
       }
 
-    //   clickedLoadMore = await this.clickFirstAvailable(this.settings.trendsLoadMoreButtonSelectors);
-    //   if (clickedLoadMore) {
-    //     await this.randomDelay();
-    //   } else {
-    //     console.warn("Load more button was not found on trends page. Continuing with visible tags.");
-    //   }
+      //   clickedLoadMore = await this.clickFirstAvailable(this.settings.trendsLoadMoreButtonSelectors);
+      //   if (clickedLoadMore) {
+      //     await this.randomDelay();
+      //   } else {
+      //     console.warn("Load more button was not found on trends page. Continuing with visible tags.");
+      //   }
 
       // Extract tag text from page
       let tagTexts = [];
@@ -1022,7 +1022,7 @@ class ShutterStockService extends PlatformService {
           .filter(Boolean);
 
         for (const candidate of candidates) {
-          if (englishTagPattern.test(candidate)) {
+          if (englishTagPattern.test(candidate) && candidate.length >= 2 && candidate.length <= 50) {
             uniqueTags.add(candidate);
           }
         }
