@@ -14,9 +14,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.36",
-    "@langchain/ollama": "^0.1.4",
+    "@langchain/core": "^1.1.48",
+    "@langchain/ollama": "^1.2.7",
     "dotenv": "^17.4.0",
-    "playwright": "^1.59.1"
+    "playwright": "^1.59.1",
+    "sharp": "^0.34.5"
   }
 }

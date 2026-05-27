@@ -19,6 +19,7 @@ exports.config = {
     temperature: Number(process.env.OLLAMA_TEMPERATURE || 0.2),
     maxRetries: Number(process.env.OLLAMA_MAX_RETRIES || 2),
     timeoutMs: Number(process.env.OLLAMA_TIMEOUT_MS || 60000),
+    visionTimeoutMs: Number(process.env.OLLAMA_VISION_TIMEOUT_MS || 1200000),
     maxTagCount: Number(process.env.SHUTTERSTOCK_MAX_TAGS || 25),
     descriptionMinLength: Number(process.env.SHUTTERSTOCK_DESCRIPTION_MIN_LENGTH || 80),
     descriptionMaxLength: Number(process.env.SHUTTERSTOCK_DESCRIPTION_MAX_LENGTH || 200),
@@ -117,8 +118,8 @@ exports.config = {
       'textarea[placeholder*="keyword" i]',
     ].filter(Boolean),
     csvUploadModalButtonSelectors: [
-        process.env.SHUTTERSTOCK_CSV_UPLOAD_MODAL_BUTTON_SELECTOR,
-        `button[type='button'][data-testid="csv-upload"]`
+      process.env.SHUTTERSTOCK_CSV_UPLOAD_MODAL_BUTTON_SELECTOR,
+      `button[type='button'][data-testid="csv-upload"]`,
     ],
     csvUploadFileInputSelectors: [
       process.env.SHUTTERSTOCK_CSV_UPLOAD_INPUT_SELECTOR,
@@ -135,10 +136,10 @@ exports.config = {
     ].filter(Boolean),
     csvUploadSuccessSelectors: [
       process.env.SHUTTERSTOCK_CSV_UPLOAD_SUCCESS_SELECTOR,
-      'text=CSV uploaded',
-      'text=Import complete',
-      'text=Metadata uploaded',
-      'text=Upload complete',
+      "text=CSV uploaded",
+      "text=Import complete",
+      "text=Metadata uploaded",
+      "text=Upload complete",
     ].filter(Boolean),
     // uploadSaveDraftSelectors: [
     //   process.env.SHUTTERSTOCK_UPLOAD_SAVE_DRAFT_SELECTOR,
@@ -153,8 +154,8 @@ exports.config = {
       "text=Changes saved",
     ].filter(Boolean),
     uploadModalButtonSelectors: [
-        process.env.SHUTTERSTOCK_UPLOAD_MODAL_BUTTON_SELECTOR,
-        `button[type='button'][data-testid="desktop-upload-button"]`
+      process.env.SHUTTERSTOCK_UPLOAD_MODAL_BUTTON_SELECTOR,
+      `button[type='button'][data-testid="desktop-upload-button"]`,
     ].filter(Boolean),
     uploadPageUrl: process.env.SHUTTERSTOCK_UPLOAD_PAGE_URL || "https://submit.shutterstock.com/upload",
     uploadSuccessTimeoutMs: Number(process.env.SHUTTERSTOCK_UPLOAD_SUCCESS_TIMEOUT_MS || 120000),

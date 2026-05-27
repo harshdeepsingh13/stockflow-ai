@@ -244,7 +244,7 @@ class PipelineService {
 
       const mergedTags = this.tagEnrichment.enrich({
         generatedTags: generated.tags,
-        trendingTags,
+        trendingTags: generated.relevantTrendingTags ?? [],
       });
 
       const validationResult = this.validator.validate({

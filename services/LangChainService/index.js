@@ -7,6 +7,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
 const { ChatPromptTemplate } = require("@langchain/core/prompts");
 const { ChatOllama } = require("@langchain/ollama");
 const { config } = require("../../config");
@@ -25,6 +26,15 @@ class LangChainService {
    */
   constructor() {
     this.settings = config.llm;
+    this.metadataValidation = config.metadataValidation || {};
+    this.descriptionMinLength = Number(
+      this.metadataValidation.descriptionMinLength ?? this.settings.descriptionMinLength ?? 0,
+    );
+    this.descriptionMaxLength = Number(
+      this.metadataValidation.descriptionMaxLength ?? this.settings.descriptionMaxLength ?? 0,
+    );
+    this.minTagCount = Number(this.metadataValidation.minTagCount ?? 1);
+    this.maxTagCount = Number(this.metadataValidation.maxTagCount ?? this.settings.maxTagCount ?? 45);
     this.allowedCategories = new Map(
       (config.shutterStock.categories || []).map((category) => [String(category || "").toLowerCase(), category]),
     );
@@ -34,6 +44,8 @@ class LangChainService {
       temperature: this.settings.temperature,
       maxRetries: this.settings.maxRetries,
       timeout: this.settings.timeoutMs,
+      format: "json",
+      think: false,
     });
 
     this.prompt = ChatPromptTemplate.fromMessages([
@@ -46,18 +58,23 @@ class LangChainService {
           "Follow the Shutterstock guidance context exactly when provided.",
           "Shutterstock guidance context:\n{metadataContext}",
           "Allowed categories (choose exact labels only):\n{allowedCategories}",
-          "Output strict JSON only with keys: title, description, tags, primaryCategory, secondaryCategory.",
+          "Output strict JSON only with keys: title, description, tags, primaryCategory, secondaryCategory, relevantTrendingTags.",
+          "Read the complete Vision model description and then create metadata that fully captures the image content and context. Use the filename hints and trending tags as additional clues to inform your metadata, but do not rely solely on them.",
           "Rules:",
           "- Use English only.",
           "- Keep title concise and marketable.",
-          "- Keep description vivid & viran.",
+          "- Keep description vivid & viral.",
+          "- Description length must be between {descriptionMinLength} and {descriptionMaxLength} characters.",
           "- tags must be an array of unique lowercase strings.",
+          "- tags count must be between {minTagCount} and {maxTagCount}.",
           "- primaryCategory is required and must be exactly one allowed category.",
           "- secondaryCategory is optional; include it only when a second category clearly fits.",
           "- If secondaryCategory is present, it must be different from primaryCategory.",
           "- Select at least 1 and at most 2 categories total.",
           "- Do not include brand names or trademarked terms.",
           "- No markdown, no explanations.",
+          "- relevantTrendingTags must be an array of strings chosen ONLY from the provided Trending tags candidates that are genuinely relevant to THIS specific image. Only include tags you would actually use to describe this image. Can be empty array [].",
+          
         ].join("\n"),
       ],
       [
@@ -107,6 +124,7 @@ class LangChainService {
       "and vision description length:",
       visionDescription.length,
     );
+    console.debug("Vision description:", visionDescription);
     const payload = {
       fileName: path.basename(imagePath),
       imagePath,
@@ -116,6 +134,10 @@ class LangChainService {
       trendingTags: JSON.stringify(trendingTags.slice(0, 30)),
       validationErrors: JSON.stringify(validationErrors),
       allowedCategories: (config.shutterStock.categories || []).map((category) => `- ${category}`).join("\n"),
+      descriptionMinLength: this.descriptionMinLength,
+      descriptionMaxLength: this.descriptionMaxLength,
+      minTagCount: this.minTagCount,
+      maxTagCount: this.maxTagCount,
     };
 
     const chain = this.prompt.pipe(this.model);
@@ -144,6 +166,11 @@ class LangChainService {
       secondaryCategory: this.normalizeCategory(
         parsed.secondaryCategory || (Array.isArray(parsed.categories) ? parsed.categories[1] : ""),
       ),
+      relevantTrendingTags: Array.isArray(parsed.relevantTrendingTags)
+        ? parsed.relevantTrendingTags
+            .map((t) => String(t || "").trim().toLowerCase())
+            .filter(Boolean)
+        : [],
     };
   }
 
@@ -213,10 +240,15 @@ class LangChainService {
    * @throws {Error} If vision is required but fails
    */
   async describeImageWithVisionModel(imagePath) {
-    const imageBuffer = fs.readFileSync(imagePath);
+    const imageBuffer = await sharp(imagePath)
+      .resize(640, 640, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
     const imageBase64 = imageBuffer.toString("base64");
 
-    const response = await fetch(`${this.settings.ollamaBaseUrl}/api/chat`, {
+    let response;
+    try {
+      response = await fetch(`${this.settings.ollamaBaseUrl}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -230,17 +262,22 @@ class LangChainService {
             content: [
               "Describe this image in English for stock-photo metadata.",
               "We need to make this description/caption SEO friendly and searchable by as many relevant keywords as possible, while keeping it accurate and literal.",
-              "Act as a Senior social media manaager for a big firm.",
-              `keep the visual description around ${this.settings.descriptionMinLength} characters.`,
               "Return a single paragraph.",
+              `keep the visual description minimum of ${this.settings.descriptionMinLength} characters.`,
+              "Act as a Senior social media manager for a big firm.",
               "Avoid assumptions not visible in the image.",
             ].join("\n"),
             images: [imageBase64],
           },
         ],
       }),
-      signal: AbortSignal.timeout(this.settings.timeoutMs),
+      signal: AbortSignal.timeout(this.settings.visionTimeoutMs),
     });
+    } catch (fetchError) {
+      const cause = fetchError.cause?.code || fetchError.cause?.message || fetchError.message;
+      console.error(`[Vision] fetch to Ollama failed. Cause: ${cause}`);
+      throw fetchError;
+    }
 
     if (!response.ok) {
       const raw = await response.text();
