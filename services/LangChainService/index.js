@@ -148,6 +148,7 @@ class LangChainService {
       : String(response.content || "");
 
     const parsed = this.parseJSON(content);
+    const trendingTagsSet = new Set(trendingTags.map((t) => String(t).trim().toLowerCase()));
     return {
       title: String(parsed.title || "").trim(),
       description: String(parsed.description || "").trim(),
@@ -170,6 +171,7 @@ class LangChainService {
         ? parsed.relevantTrendingTags
             .map((t) => String(t || "").trim().toLowerCase())
             .filter(Boolean)
+            .filter((t) => trendingTagsSet.has(t))
         : [],
     };
   }
@@ -275,8 +277,12 @@ class LangChainService {
     });
     } catch (fetchError) {
       const cause = fetchError.cause?.code || fetchError.cause?.message || fetchError.message;
-      console.error(`[Vision] fetch to Ollama failed. Cause: ${cause}`);
-      throw fetchError;
+      const message = `Vision fetch failed: ${cause}`;
+      if (this.settings.requireVision) {
+        throw new Error(`${message}. Ensure Ollama is running and OLLAMA_BASE_URL is correct.`);
+      }
+      console.warn(message);
+      return `No vision description available. Filename hint: ${this.buildFileHints(imagePath)}`;
     }
 
     if (!response.ok) {
@@ -290,7 +296,18 @@ class LangChainService {
       return `No vision description available. Filename hint: ${this.buildFileHints(imagePath)}`;
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      const message = "Vision model returned a non-JSON response body.";
+      if (this.settings.requireVision) {
+        throw new Error(message);
+      }
+      console.warn(message);
+      return `No vision description available. Filename hint: ${this.buildFileHints(imagePath)}`;
+    }
+
     const text = String(data?.message?.content || "").trim();
 
     if (!text) {
